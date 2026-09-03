@@ -1,0 +1,22 @@
+CREATE TABLE products (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  category_id BIGINT UNSIGNED NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  slug VARCHAR(220) NOT NULL,
+  description TEXT NULL,
+  care_instructions TEXT NULL,
+  fabric VARCHAR(100) NULL,
+  base_price DECIMAL(10,2) NOT NULL,
+  compare_at_price DECIMAL(10,2) NULL DEFAULT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_featured TINYINT(1) NOT NULL DEFAULT 0,
+  meta_title VARCHAR(200) NULL,
+  meta_description VARCHAR(300) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_products_slug (slug),
+  INDEX idx_products_category (category_id),
+  INDEX idx_products_active (is_active),
+  INDEX idx_products_featured (is_featured),
+  CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

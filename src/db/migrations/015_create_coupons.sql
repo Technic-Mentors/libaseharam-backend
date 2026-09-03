@@ -1,0 +1,20 @@
+CREATE TABLE coupons (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NOT NULL,
+  type ENUM('percentage','fixed') NOT NULL,
+  value DECIMAL(10,2) NOT NULL,
+  min_order_value DECIMAL(10,2) NULL DEFAULT NULL,
+  max_discount_amount DECIMAL(10,2) NULL DEFAULT NULL,
+  usage_limit_total INT NULL DEFAULT NULL,
+  usage_limit_per_customer INT NULL DEFAULT NULL,
+  times_used INT NOT NULL DEFAULT 0,
+  category_id BIGINT UNSIGNED NULL DEFAULT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  starts_at TIMESTAMP NULL DEFAULT NULL,
+  expires_at TIMESTAMP NULL DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_coupons_code (code),
+  INDEX idx_coupons_category (category_id),
+  CONSTRAINT fk_coupons_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

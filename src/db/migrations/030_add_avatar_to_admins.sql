@@ -1,0 +1,2 @@
+ALTER TABLE admins
+  ADD COLUMN avatar VARCHAR(255) NULL AFTER email;

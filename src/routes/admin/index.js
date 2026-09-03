@@ -1,0 +1,34 @@
+import { Router } from 'express';
+import { authRouter } from './auth.routes.js';
+import { categoriesRouter } from './categories.routes.js';
+import { productsRouter } from './products.routes.js';
+import { ordersRouter } from './orders.routes.js';
+import { couponsRouter } from './coupons.routes.js';
+import { shippingRouter } from './shipping.routes.js';
+import { reviewsRouter } from './reviews.routes.js';
+import { blogRouter } from './blog.routes.js';
+import { bannersRouter } from './banners.routes.js';
+import { settingsRouter } from './settings.routes.js';
+import { dashboardRouter } from './dashboard.routes.js';
+import { notificationsRouter } from './notifications.routes.js';
+import { customersRouter } from './customers.routes.js';
+import { reportsRouter } from './reports.routes.js';
+import { contactMessagesRouter } from './contactMessages.routes.js';
+
+export const adminRouter = Router();
+
+adminRouter.use('/auth', authRouter);
+adminRouter.use('/categories', categoriesRouter);
+adminRouter.use('/products', productsRouter);
+adminRouter.use('/orders', ordersRouter);
+adminRouter.use('/coupons', couponsRouter);
+adminRouter.use('/shipping', shippingRouter);
+adminRouter.use('/reviews', reviewsRouter);
+adminRouter.use('/blog', blogRouter);
+adminRouter.use('/banners', bannersRouter);
+adminRouter.use('/settings', settingsRouter);
+adminRouter.use('/dashboard', dashboardRouter);
+adminRouter.use('/notifications', notificationsRouter);
+adminRouter.use('/customers', customersRouter);
+adminRouter.use('/reports', reportsRouter);
+adminRouter.use('/contact-messages', contactMessagesRouter);

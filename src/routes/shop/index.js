@@ -1,0 +1,31 @@
+import { Router } from 'express';
+import { authRouter } from './auth.routes.js';
+import { catalogRouter } from './catalog.routes.js';
+import { cartRouter } from './cart.routes.js';
+import { wishlistRouter, notifyMeRouter } from './wishlist.routes.js';
+import { ordersRouter } from './orders.routes.js';
+import { addressesRouter } from './addresses.routes.js';
+import { couponsRouter } from './coupons.routes.js';
+import { reviewsRouter } from './reviews.routes.js';
+import { blogRouter } from './blog.routes.js';
+import { bannersRouter } from './banners.routes.js';
+import { settingsRouter } from './settings.routes.js';
+import { contactRouter } from './contact.routes.js';
+import { notificationsRouter } from './notifications.routes.js';
+
+export const shopRouter = Router();
+
+shopRouter.use('/auth', authRouter);
+shopRouter.use('/', catalogRouter);
+shopRouter.use('/cart', cartRouter);
+shopRouter.use('/wishlist', wishlistRouter);
+shopRouter.use('/notify-me', notifyMeRouter);
+shopRouter.use('/orders', ordersRouter);
+shopRouter.use('/addresses', addressesRouter);
+shopRouter.use('/coupons', couponsRouter);
+shopRouter.use('/reviews', reviewsRouter);
+shopRouter.use('/blog', blogRouter);
+shopRouter.use('/banners', bannersRouter);
+shopRouter.use('/settings', settingsRouter);
+shopRouter.use('/contact', contactRouter);
+shopRouter.use('/notifications', notificationsRouter);
