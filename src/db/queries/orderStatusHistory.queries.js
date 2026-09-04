@@ -1,9 +1,9 @@
 import { pool } from '../../config/db.js';
 
-export async function insertStatusHistory(connection, { orderId, status, changedBy, note }) {
+export async function insertStatusHistory(connection, { orderId, status, changedBy, actorName, note }) {
   await connection.query(
-    'INSERT INTO order_status_history (order_id, status, changed_by, note) VALUES (?, ?, ?, ?)',
-    [orderId, status, changedBy, note || null],
+    'INSERT INTO order_status_history (order_id, status, changed_by, actor_name, note) VALUES (?, ?, ?, ?, ?)',
+    [orderId, status, changedBy, actorName || null, note || null],
   );
 }
 

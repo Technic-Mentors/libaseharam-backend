@@ -29,8 +29,9 @@ export const env = {
 
   cookieDomain: process.env.COOKIE_DOMAIN || 'localhost',
 
-  resend: {
-    apiKey: process.env.RESEND_API_KEY || '',
+  mail: {
+    user: process.env.GMAIL_USER || '',
+    pass: process.env.GMAIL_PASS || '',
     emailFrom: process.env.EMAIL_FROM || 'Libas-e-Haram <orders@libaseharam.com>',
     adminAlertEmail: process.env.ADMIN_ALERT_EMAIL || '',
   },

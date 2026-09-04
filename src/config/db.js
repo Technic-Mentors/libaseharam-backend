@@ -8,9 +8,34 @@ export const pool = mysql.createPool({
   password: env.db.password,
   database: env.db.database,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 25,
   dateStrings: true,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
+
+const RETRYABLE_CODES = new Set([
+  'PROTOCOL_CONNECTION_LOST',
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'ER_SERVER_SHUTDOWN',
+  'EPIPE',
+]);
+
+// Remote MySQL hosts often close idle pool connections server-side (short wait_timeout)
+// without the pool noticing until the next query fails. Retry once transparently on a
+// fresh connection instead of surfacing a transient error to the user.
+const originalQuery = pool.query.bind(pool);
+pool.query = async function queryWithRetry(...args) {
+  try {
+    return await originalQuery(...args);
+  } catch (error) {
+    if (RETRYABLE_CODES.has(error.code)) {
+      return originalQuery(...args);
+    }
+    throw error;
+  }
+};
 
 /**
  * Runs `work` inside a transaction, committing on success and rolling back on error.

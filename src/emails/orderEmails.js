@@ -1,4 +1,4 @@
-import { sendEmail } from '../config/resend.js';
+import { sendEmail } from '../config/mailer.js';
 import { env } from '../config/env.js';
 
 function layout(bodyHtml) {
@@ -38,20 +38,37 @@ export async function sendOrderPlacedEmail(to, order) {
 }
 
 export async function sendOrderStatusEmail(to, order) {
+  const reasonHtml =
+    order.status === 'cancelled' && order.cancelled_reason
+      ? `<p><strong>Reason:</strong> ${order.cancelled_reason}</p>`
+      : '';
+
+  const reviewCtaHtml =
+    order.status === 'delivered'
+      ? `<p style="margin-top: 24px; text-align: center;">
+           <a href="${env.urls.customerApp}/account/orders/${order.id}"
+              style="display:inline-block;background:#92722a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;font-weight:bold;">
+             Add a Review
+           </a>
+         </p>`
+      : '';
+
   await sendEmail({
     to,
     subject: `Order ${order.order_number} update — Libas-e-Haram`,
     html: layout(`
       <p><strong>Order Number:</strong> ${order.order_number}</p>
       <p>${STATUS_MESSAGES[order.status] || 'Your order status has been updated.'}</p>
+      ${reasonHtml}
+      ${reviewCtaHtml}
     `),
   });
 }
 
 export async function sendAdminNewOrderAlert(order) {
-  if (!env.resend.adminAlertEmail) return;
+  if (!env.mail.adminAlertEmail) return;
   await sendEmail({
-    to: env.resend.adminAlertEmail,
+    to: env.mail.adminAlertEmail,
     subject: `New order ${order.order_number} — Rs. ${order.total}`,
     html: layout(`
       <p>A new order has been placed.</p>

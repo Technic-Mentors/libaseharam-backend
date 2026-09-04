@@ -7,6 +7,11 @@ export const list = asyncHandler(async (req, res) => {
   res.json({ success: true, data: rows, meta });
 });
 
+export const create = asyncHandler(async (req, res) => {
+  const review = await reviewService.submitAdminReview(req.admin.id, req.body);
+  res.status(201).json({ success: true, data: review, message: 'Review added.' });
+});
+
 export const approve = asyncHandler(async (req, res) => {
   const review = await reviewService.approveReview(Number(req.params.id));
   res.json({ success: true, data: review, message: 'Review approved.' });

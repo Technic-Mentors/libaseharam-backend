@@ -15,6 +15,7 @@ import { computeShippingCharge } from './shipping.service.js';
 import { previewDiscount } from './coupon.service.js';
 import { sendOrderPlacedEmail, sendOrderStatusEmail, sendAdminNewOrderAlert } from '../emails/orderEmails.js';
 import { findCustomerById } from '../db/queries/customers.queries.js';
+import { findAdminById } from '../db/queries/admins.queries.js';
 
 const ALLOWED_TRANSITIONS = {
   placed: ['confirmed', 'cancelled'],
@@ -35,6 +36,7 @@ async function buildOrderDetail(order) {
 }
 
 export async function placeOrder(customerId, { addressId, shipping, couponCode }) {
+  const customer = await findCustomerById(customerId);
   const cartItems = await cartDb.listCartItems(customerId);
   if (cartItems.length === 0) throw new AppError('Your cart is empty.', 400);
 
@@ -120,7 +122,12 @@ export async function placeOrder(customerId, { addressId, shipping, couponCode }
       await variantsDb.decrementStock(connection, item.variant_id, item.quantity);
     }
 
-    await historyDb.insertStatusHistory(connection, { orderId: newOrderId, status: 'placed', changedBy: 'customer' });
+    await historyDb.insertStatusHistory(connection, {
+      orderId: newOrderId,
+      status: 'placed',
+      changedBy: 'customer',
+      actorName: customer.name,
+    });
 
     if (coupon) {
       await couponUsagesDb.recordUsage(connection, {
@@ -138,7 +145,6 @@ export async function placeOrder(customerId, { addressId, shipping, couponCode }
   });
 
   const order = await ordersDb.findOrderById(orderId);
-  const customer = await findCustomerById(customerId);
 
   await Promise.all([
     sendOrderPlacedEmail(customer.email, order),
@@ -171,6 +177,8 @@ export async function cancelOrderByCustomer(orderId, customerId, reason) {
     throw new AppError('This order can no longer be cancelled — it has already been confirmed.', 400);
   }
 
+  const customer = await findCustomerById(customerId);
+
   await withTransaction(async (connection) => {
     const items = await orderItemsDb.listItemsForOrder(orderId);
     for (const item of items) {
@@ -181,12 +189,12 @@ export async function cancelOrderByCustomer(orderId, customerId, reason) {
       orderId,
       status: 'cancelled',
       changedBy: 'customer',
+      actorName: customer.name,
       note: reason,
     });
   });
 
   const updated = await ordersDb.findOrderById(orderId);
-  const customer = await findCustomerById(customerId);
   await Promise.all([
     sendOrderStatusEmail(customer.email, updated),
     notificationsDb.createNotification({
@@ -212,7 +220,7 @@ export async function getOrderAdmin(orderId) {
   return buildOrderDetail(order);
 }
 
-export async function updateOrderStatusAdmin(orderId, newStatus, note) {
+export async function updateOrderStatusAdmin(orderId, newStatus, note, adminId) {
   const order = await ordersDb.findOrderById(orderId);
   if (!order) throw new AppError('Order not found.', 404);
 
@@ -220,6 +228,8 @@ export async function updateOrderStatusAdmin(orderId, newStatus, note) {
   if (!allowed.includes(newStatus)) {
     throw new AppError(`Cannot move an order from "${order.status}" to "${newStatus}".`, 400);
   }
+
+  const admin = await findAdminById(adminId);
 
   await withTransaction(async (connection) => {
     if (newStatus === 'cancelled') {
@@ -231,7 +241,13 @@ export async function updateOrderStatusAdmin(orderId, newStatus, note) {
     } else {
       await ordersDb.updateOrderStatus(connection, orderId, newStatus);
     }
-    await historyDb.insertStatusHistory(connection, { orderId, status: newStatus, changedBy: 'admin', note });
+    await historyDb.insertStatusHistory(connection, {
+      orderId,
+      status: newStatus,
+      changedBy: 'admin',
+      actorName: admin?.name,
+      note,
+    });
   });
 
   if (newStatus === 'delivered') {

@@ -40,6 +40,11 @@ export async function submitReview(customerId, { orderItemId, rating, title, com
   return reviewsDb.findReviewById(id);
 }
 
+export async function submitAdminReview(adminId, { productId, rating, title, comment }) {
+  const id = await reviewsDb.createAdminReview({ productId, adminId, rating, title, comment });
+  return reviewsDb.findReviewById(id);
+}
+
 export async function listAdminReviews({ status, page, pageSize }) {
   const offset = (page - 1) * pageSize;
   const { rows, total } = await reviewsDb.listAdminReviews({ status, limit: pageSize, offset });

@@ -20,6 +20,11 @@ export const getOne = asyncHandler(async (req, res) => {
 });
 
 export const updateStatus = asyncHandler(async (req, res) => {
-  const order = await orderService.updateOrderStatusAdmin(Number(req.params.id), req.body.status, req.body.note);
+  const order = await orderService.updateOrderStatusAdmin(
+    Number(req.params.id),
+    req.body.status,
+    req.body.note,
+    req.admin.id,
+  );
   res.json({ success: true, data: order, message: `Order marked as ${req.body.status}.` });
 });

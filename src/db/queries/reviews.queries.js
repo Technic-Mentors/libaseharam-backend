@@ -2,8 +2,8 @@ import { pool } from '../../config/db.js';
 
 export async function listApprovedForProduct(productId) {
   const [rows] = await pool.query(
-    `SELECT r.*, c.name AS customer_name FROM reviews r
-     JOIN customers c ON c.id = r.customer_id
+    `SELECT r.*, COALESCE(c.name, 'Anonymous Customer') AS customer_name FROM reviews r
+     LEFT JOIN customers c ON c.id = r.customer_id
      WHERE r.product_id = ? AND r.status = 'approved'
      ORDER BY r.created_at DESC`,
     [productId],
@@ -25,9 +25,11 @@ export async function listAdminReviews({ status, limit, offset }) {
   const params = status ? [status] : [];
 
   const [rows] = await pool.query(
-    `SELECT r.*, c.name AS customer_name, p.name AS product_name, p.slug AS product_slug
+    `SELECT r.*, COALESCE(c.name, CONCAT('Added by admin: ', a.name)) AS customer_name,
+        p.name AS product_name, p.slug AS product_slug
      FROM reviews r
-     JOIN customers c ON c.id = r.customer_id
+     LEFT JOIN customers c ON c.id = r.customer_id
+     LEFT JOIN admins a ON a.id = r.admin_id
      JOIN products p ON p.id = r.product_id
      ${where}
      ORDER BY r.created_at DESC LIMIT ? OFFSET ?`,
@@ -58,6 +60,15 @@ export async function createReview({ productId, customerId, orderItemId, rating,
     `INSERT INTO reviews (product_id, customer_id, order_item_id, rating, title, comment)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [productId, customerId, orderItemId, rating, title || null, comment || null],
+  );
+  return result.insertId;
+}
+
+export async function createAdminReview({ productId, adminId, rating, title, comment }) {
+  const [result] = await pool.query(
+    `INSERT INTO reviews (product_id, admin_id, rating, title, comment, status)
+     VALUES (?, ?, ?, ?, ?, 'approved')`,
+    [productId, adminId, rating, title || null, comment || null],
   );
   return result.insertId;
 }

@@ -65,7 +65,9 @@ export async function listOrdersAdmin({ status, search, dateFrom, dateTo, limit,
     params.push(dateFrom);
   }
   if (dateTo) {
-    conditions.push('o.created_at <= ?');
+    // dateTo is a plain date (e.g. "2026-09-04"); make it inclusive of the whole day
+    // rather than comparing against midnight, which would exclude same-day orders.
+    conditions.push('o.created_at < DATE_ADD(?, INTERVAL 1 DAY)');
     params.push(dateTo);
   }
 

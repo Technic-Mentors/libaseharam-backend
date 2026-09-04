@@ -1,4 +1,4 @@
-import { sendEmail } from '../config/resend.js';
+import { sendEmail } from '../config/mailer.js';
 
 function layout(bodyHtml) {
   return `

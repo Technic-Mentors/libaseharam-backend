@@ -9,6 +9,15 @@ export const submitReviewSchema = z.object({
   }),
 });
 
+export const adminReviewSchema = z.object({
+  body: z.object({
+    productId: z.coerce.number().int().positive(),
+    rating: z.coerce.number().int().min(1).max(5),
+    title: z.string().trim().max(150).optional(),
+    comment: z.string().trim().max(2000).optional(),
+  }),
+});
+
 export const productIdParamSchema = z.object({
   params: z.object({ productId: z.coerce.number().int().positive() }),
 });

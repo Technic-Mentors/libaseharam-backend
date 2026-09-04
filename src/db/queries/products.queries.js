@@ -7,7 +7,11 @@ const PRODUCT_LIST_SELECT = `
     (SELECT MIN(COALESCE(pv.price_override, p.base_price)) FROM product_variants pv
        WHERE pv.product_id = p.id) AS min_price,
     (SELECT COALESCE(SUM(pv.stock_quantity), 0) FROM product_variants pv
-       WHERE pv.product_id = p.id) AS total_stock
+       WHERE pv.product_id = p.id) AS total_stock,
+    (SELECT COALESCE(AVG(r.rating), 0) FROM reviews r
+       WHERE r.product_id = p.id AND r.status = 'approved') AS rating_avg,
+    (SELECT COUNT(*) FROM reviews r
+       WHERE r.product_id = p.id AND r.status = 'approved') AS rating_count
   FROM products p
   JOIN categories c ON c.id = p.category_id
 `;
@@ -72,23 +76,32 @@ export async function listProducts({
   const havingClause = havingConditions.length ? `HAVING ${havingConditions.join(' AND ')}` : '';
   const orderBy = SORT_COLUMNS[sort] || SORT_COLUMNS.newest;
 
-  const [rows] = await pool.query(
+  const rowsQuery = pool.query(
     `${PRODUCT_LIST_SELECT} ${whereClause} ${havingClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
     [...params, ...havingParams, limit, offset],
   );
 
-  const [countRows] = await pool.query(
-    `SELECT COUNT(*) AS total FROM (
-       SELECT p.id,
-         (SELECT MIN(COALESCE(pv.price_override, p.base_price)) FROM product_variants pv
-            WHERE pv.product_id = p.id) AS min_price
-       FROM products p
-       JOIN categories c ON c.id = p.category_id
-       ${whereClause}
-       ${havingClause}
-     ) AS filtered`,
-    [...params, ...havingParams],
-  );
+  // Without a price filter, plain COUNT(*) on the base tables is equivalent to counting the
+  // filtered set but skips recomputing the per-row min_price subquery for every product.
+  const countQuery = havingClause
+    ? pool.query(
+        `SELECT COUNT(*) AS total FROM (
+           SELECT p.id,
+             (SELECT MIN(COALESCE(pv.price_override, p.base_price)) FROM product_variants pv
+                WHERE pv.product_id = p.id) AS min_price
+           FROM products p
+           JOIN categories c ON c.id = p.category_id
+           ${whereClause}
+           ${havingClause}
+         ) AS filtered`,
+        [...params, ...havingParams],
+      )
+    : pool.query(
+        `SELECT COUNT(*) AS total FROM products p JOIN categories c ON c.id = p.category_id ${whereClause}`,
+        params,
+      );
+
+  const [[rows], [countRows]] = await Promise.all([rowsQuery, countQuery]);
 
   return { rows, total: countRows[0].total };
 }
