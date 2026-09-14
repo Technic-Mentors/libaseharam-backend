@@ -51,10 +51,11 @@ export async function createBanner(data) {
 export async function updateBanner(id, data) {
   await pool.query(
     `UPDATE banners SET
-       title = ?, link_url = ?, placement = ?, sort_order = ?, is_active = ?, starts_at = ?, ends_at = ?
+       title = ?, image_path = ?, link_url = ?, placement = ?, sort_order = ?, is_active = ?, starts_at = ?, ends_at = ?
      WHERE id = ?`,
     [
       data.title,
+      data.imagePath,
       data.linkUrl || null,
       data.placement || 'hero',
       data.sortOrder ?? 0,

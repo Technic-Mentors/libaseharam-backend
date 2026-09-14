@@ -2,6 +2,7 @@ import { AppError } from '../utils/AppError.js';
 import { slugify } from '../utils/slugify.js';
 import { pool, withTransaction } from '../config/db.js';
 import { buildPaginationMeta } from '../utils/pagination.js';
+import { finalizeUpload, publicPathFor, deleteUploadedFile } from '../config/upload.js';
 import * as productsDb from '../db/queries/products.queries.js';
 import * as variantsDb from '../db/queries/productVariants.queries.js';
 import * as imagesDb from '../db/queries/productImages.queries.js';
@@ -135,7 +136,7 @@ export async function updateProduct(id, data) {
 }
 
 export async function deleteProduct(id) {
-  await getAdminProductById(id);
+  const product = await getAdminProductById(id);
   try {
     await productsDb.deleteProduct(id);
   } catch (error) {
@@ -144,6 +145,7 @@ export async function deleteProduct(id) {
     }
     throw error;
   }
+  await Promise.all(product.images.map((image) => deleteUploadedFile(image.image_path)));
 }
 
 export async function addVariant(productId, data) {
@@ -172,8 +174,11 @@ export async function removeVariant(productId, variantId) {
   }
 }
 
-export async function addImage(productId, { variantId, imagePath, isPrimary }) {
-  await getAdminProductById(productId);
+export async function addImage(productId, { file, variantId, isPrimary }) {
+  const product = await getAdminProductById(productId);
+  const filename = await finalizeUpload('products', file, product.name);
+  const imagePath = publicPathFor('products', filename);
+
   if (isPrimary) await imagesDb.clearPrimaryForProduct(productId);
   const id = await imagesDb.addProductImage({ productId, variantId, imagePath, isPrimary });
   return imagesDb.findImageById(id);
@@ -183,6 +188,7 @@ export async function removeImage(productId, imageId) {
   const image = await imagesDb.findImageById(imageId);
   if (!image || image.product_id !== productId) throw new AppError('Image not found.', 404);
   await imagesDb.deleteImage(imageId);
+  await deleteUploadedFile(image.image_path);
 }
 
 export async function makeImagePrimary(productId, imageId) {

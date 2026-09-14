@@ -27,12 +27,12 @@ export async function createCategory({ parentId, name, slug, description, banner
   return result.insertId;
 }
 
-export async function updateCategory(id, { parentId, name, slug, description, bannerImage, sortOrder, isActive }) {
+export async function updateCategory(id, { parentId, name, slug, description, sortOrder, isActive }) {
   await pool.query(
     `UPDATE categories SET
-       parent_id = ?, name = ?, slug = ?, description = ?, banner_image = ?, sort_order = ?, is_active = ?
+       parent_id = ?, name = ?, slug = ?, description = ?, sort_order = ?, is_active = ?
      WHERE id = ?`,
-    [parentId || null, name, slug, description || null, bannerImage || null, sortOrder ?? 0, isActive ? 1 : 0, id],
+    [parentId || null, name, slug, description || null, sortOrder ?? 0, isActive ? 1 : 0, id],
   );
 }
 

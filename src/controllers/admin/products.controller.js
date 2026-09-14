@@ -1,6 +1,5 @@
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/AppError.js';
-import { publicPathFor } from '../../config/upload.js';
 import * as productService from '../../services/product.service.js';
 
 export const list = asyncHandler(async (req, res) => {
@@ -57,10 +56,9 @@ export const removeVariant = asyncHandler(async (req, res) => {
 export const uploadImage = asyncHandler(async (req, res) => {
   if (!req.file) throw new AppError('No image file was uploaded.', 400);
   const productId = Number(req.params.id);
-  const imagePath = publicPathFor('products', req.file.filename);
   const image = await productService.addImage(productId, {
+    file: req.file,
     variantId: req.body.variantId ? Number(req.body.variantId) : null,
-    imagePath,
     isPrimary: req.body.isPrimary === 'true',
   });
   res.status(201).json({ success: true, data: image, message: 'Image uploaded.' });

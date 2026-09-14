@@ -6,7 +6,10 @@ export const bannerBodySchema = z.object({
     linkUrl: z.string().trim().max(255).optional().nullable(),
     placement: z.string().trim().max(50).optional(),
     sortOrder: z.coerce.number().int().optional(),
-    isActive: z.coerce.boolean().optional(),
+    isActive: z
+      .union([z.boolean(), z.enum(['true', 'false'])])
+      .optional()
+      .transform((value) => (value === undefined ? undefined : value === true || value === 'true')),
     startsAt: z.string().trim().optional().nullable(),
     endsAt: z.string().trim().optional().nullable(),
   }),

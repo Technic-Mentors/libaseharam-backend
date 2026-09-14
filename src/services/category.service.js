@@ -1,6 +1,7 @@
 import { AppError } from '../utils/AppError.js';
 import { slugify } from '../utils/slugify.js';
 import { pool } from '../config/db.js';
+import { finalizeUpload, publicPathFor, deleteUploadedFile } from '../config/upload.js';
 import * as categoriesDb from '../db/queries/categories.queries.js';
 
 async function ensureUniqueSlug(name, excludeId = null) {
@@ -46,14 +47,19 @@ export async function updateCategory(id, data) {
   return categoriesDb.findCategoryById(id);
 }
 
-export async function setCategoryBanner(id, bannerImage) {
-  await getCategory(id);
+export async function setCategoryBanner(id, file) {
+  const category = await getCategory(id);
+  const filename = await finalizeUpload('categories', file, category.name);
+  const bannerImage = publicPathFor('categories', filename);
+
   await categoriesDb.updateCategoryBanner(id, bannerImage);
+  await deleteUploadedFile(category.banner_image);
+
   return categoriesDb.findCategoryById(id);
 }
 
 export async function deleteCategory(id) {
-  await getCategory(id);
+  const category = await getCategory(id);
 
   const [productCount, subcategoryCount] = await Promise.all([
     categoriesDb.countProductsInCategory(id),
@@ -68,4 +74,5 @@ export async function deleteCategory(id) {
   }
 
   await categoriesDb.deleteCategory(id);
+  await deleteUploadedFile(category.banner_image);
 }

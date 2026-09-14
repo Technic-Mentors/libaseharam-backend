@@ -11,5 +11,5 @@ const uploadImage = createUploader('banners');
 bannersRouter.use(requireAdmin);
 bannersRouter.get('/', validate(listBannersQuerySchema), bannersController.list);
 bannersRouter.post('/', uploadImage.single('image'), validate(bannerBodySchema), bannersController.create);
-bannersRouter.put('/:id', validate(bannerBodySchema), bannersController.update);
+bannersRouter.put('/:id', uploadImage.single('image'), validate(bannerBodySchema), bannersController.update);
 bannersRouter.delete('/:id', validate(bannerIdParamSchema), bannersController.remove);

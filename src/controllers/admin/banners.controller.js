@@ -1,6 +1,6 @@
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/AppError.js';
-import { publicPathFor } from '../../config/upload.js';
+import { finalizeUpload, publicPathFor } from '../../config/upload.js';
 import * as bannerService from '../../services/banner.service.js';
 
 export const list = asyncHandler(async (req, res) => {
@@ -14,13 +14,19 @@ export const list = asyncHandler(async (req, res) => {
 
 export const create = asyncHandler(async (req, res) => {
   if (!req.file) throw new AppError('A banner image is required.', 400);
-  const imagePath = publicPathFor('banners', req.file.filename);
+  const filename = await finalizeUpload('banners', req.file, req.body.title);
+  const imagePath = publicPathFor('banners', filename);
   const banner = await bannerService.createBanner({ ...req.body, imagePath });
   res.status(201).json({ success: true, data: banner, message: 'Banner created.' });
 });
 
 export const update = asyncHandler(async (req, res) => {
-  const banner = await bannerService.updateBanner(Number(req.params.id), req.body);
+  let imagePath;
+  if (req.file) {
+    const filename = await finalizeUpload('banners', req.file, req.body.title);
+    imagePath = publicPathFor('banners', filename);
+  }
+  const banner = await bannerService.updateBanner(Number(req.params.id), { ...req.body, imagePath });
   res.json({ success: true, data: banner, message: 'Banner updated.' });
 });
 
